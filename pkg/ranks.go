@@ -24,7 +24,7 @@ var Grades = []string{
 }
 
 type Input struct {
-	Seconds float64  `json:"time"`
+	Seconds int  `json:"time"`
 	Grades  []string `json:"grades"`
 }
 
@@ -41,6 +41,7 @@ func (i Input) Compute() (Output, error) {
 	// TODO: modify to output AvgGrade and NumRoutes
 	if valid := stringInSlice(i.Grade, Grades); valid {
 		// now we know grade is valid
+		ParseGrade
 		pointVal := ParseGrade(i.Grade)
 		o := Output{Seconds: i.Seconds, Grade: i.Grade, PointValue: pointVal}
 		return o, nil
