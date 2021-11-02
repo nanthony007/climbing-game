@@ -1,8 +1,6 @@
-package pkg
+package core
 
-import "log"
-
-func Sum(array []int) int {
+func sum(array []int) int {
 	var result int
 	for _, v := range array {
 		result += v
@@ -10,12 +8,6 @@ func Sum(array []int) int {
 	return result
 }
 
-func Mean(array []int) float64 {
-	return float64(Sum(array)) / float64(len(array))
-}
-
-func Check(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
+func mean(array []int) float64 {
+	return float64(sum(array)) / float64(len(array))
 }

@@ -1,8 +1,7 @@
-package models
+package core
 
 import (
 	"errors"
-	"github.com/nanthony007/climbing-game/pkg"
 )
 
 var Grades = map[string]int{
@@ -39,25 +38,28 @@ type Input struct {
 	Routes  []Route `json:"routes" form:"routes"`
 }
 
-func (i Input) TotalPoints() int {
+func (i Input) TotalPoints() (int, error) {
 	var routePoints []int
 	for _, route := range i.Routes {
 		val, err := route.PointValue()
-		pkg.Check(err)
+		if err != nil {
+			return -1, err
+		}
 		routePoints = append(routePoints, val)
 	}
-	return pkg.Sum(routePoints)
+	return sum(routePoints), nil
 }
 
-func (i Input) AverageDifficulty() float64 {
+func (i Input) AverageDifficulty() (float64, error) {
 	var routePoints []int
 	for _, route := range i.Routes {
-		val, ok := Grades[route.Grade]
-		if ok {
-			routePoints = append(routePoints, val)
+		val, err := route.PointValue()
+		if err != nil {
+			return -1, err
 		}
+		routePoints = append(routePoints, val)
 	}
-	return pkg.Mean(routePoints)
+	return mean(routePoints), nil
 }
 
 type Output struct {
@@ -69,13 +71,25 @@ type Output struct {
 	Score             float64 `json:"score"`
 }
 
-func (i Input) Compute() Output {
+func (i Input) Compute() (Output, error) {
+	points, err := i.TotalPoints()
+	if err != nil {
+		return Output{}, err
+	}
+	difficulty, err := i.AverageDifficulty()
+	if err != nil {
+		return Output{}, err
+	}
 	o := Output{
 		TotalTime:         i.Seconds,
-		TotalPoints:       i.TotalPoints(),
+		TotalPoints:       points,
 		NumRoutes:         len(i.Routes),
-		AverageDifficulty: i.AverageDifficulty(),
+		AverageDifficulty: difficulty,
 		Routes:            i.Routes,
 	}
-	return o
+	return o, nil
+}
+
+func NewGame() (Input, error) {
+	return Input{}, nil
 }

@@ -1,38 +1,34 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/nanthony007/climbing-game/pkg/models"
 	"log"
+	"net/http"
+
+	core "github.com/nanthony007/climbing-game/pkg"
 )
 
-// This is a pattern for API use
-//oldPoints := i.TotalPoints()
-//i.Routes = append(i.Routes, route)
-//newPoints := i.TotalPoints()
-
 func main() {
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.POST("/problem", func(c *gin.Context) {
-		var input models.Input
-		// If `GET`, only `Form` binding engine (`query`) used.
-		// If `POST`, first checks the `content-type` for `JSON` or `XML`, then uses `Form` (`form-data`).
-		// See more at https://github.com/gin-gonic/gin/blob/master/binding/binding.go#L48
-		err := c.ShouldBind(&input)
+	http.HandleFunc("/game", gameHandler)
+	log.Panic(http.ListenAndServe(":8080", nil))
+}
+
+func gameHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		game, err := core.NewGame()
 		if err != nil {
-			log.Fatal("Could not assemble data into json.")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		newData := input.Compute()
-		fmt.Println(newData)
-		c.JSON(201, gin.H{
-			"output": newData,
-		})
-	})
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+		decodeErr := json.NewDecoder(r.Body).Decode(&game)
+		if decodeErr != nil {
+			http.Error(w, decodeErr.Error(), http.StatusInternalServerError)
+		}
+		json.NewEncoder(w).Encode(game)
+		pts, _ := game.TotalPoints()
+		fmt.Fprint(w, "Game was worth ", pts, " points.")
+	default:
+		fmt.Fprintf(w, "Sorry, only POST methods are supported.")
+	}
 }
